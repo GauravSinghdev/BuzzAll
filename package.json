@@ -1,12 +1,12 @@
 {
-  "name": "twitly",
+  "name": "BuzzAll",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint '**/*.{js,ts,tsx}'"
   },
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
