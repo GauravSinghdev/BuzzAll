@@ -1,15 +1,15 @@
 import { validateRequest } from "@/auth";
 import FollowButton from "@/components/FollowButton";
-import FolllowerCount from "@/components/FollowerCount";
+import FollowerCount from "@/components/FollowerCount"; 
 import TrendsSidebar from "@/components/TrendsSidebar";
 import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
-import { FollowerrInfo, UserData, getUserDataSelect } from "@/lib/types"
+import { FollowerrInfo, UserData, getUserDataSelect } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { formatDate } from "date-fns";
 import { notFound } from "next/navigation";
-import { cache } from "react"
+import { cache } from "react";
 import UserPost from "./UserPost";
 
 interface PageProps {
@@ -21,37 +21,35 @@ const getUser = cache(async (username: string, loggedInUserId: string) => {
         where: {
             username: {
                 equals: username,
-                mode: "insensitive"
-            }
+                mode: "insensitive",
+            },
         },
-        select: getUserDataSelect(loggedInUserId)
+        select: getUserDataSelect(loggedInUserId),
     });
 
-    if(!user) notFound();
+    if (!user) notFound();
 
     return user;
-})
+});
 
-export async function generateMetadata({params: { username }}: PageProps) {
-    const { user: loggedInUser} = await validateRequest();
+export async function generateMetadata({ params: { username } }: PageProps) {
+    const { user: loggedInUser } = await validateRequest();
 
-    if(!loggedInUser) return {}
+    if (!loggedInUser) return {};
 
     const user = await getUser(username, loggedInUser.id);
 
     return {
-        title: `${user.displayName} (@${user.username})`
-    }
+        title: `${user.displayName} (@${user.username})`,
+    };
 }
 
-export default async function Page({params: { username }}: PageProps) {
+// Main page component, which is exported as default
+export default async function Page({ params: { username } }: PageProps) {
+    const { user: loggedInUser } = await validateRequest();
 
-    const { user: loggedInUser} = await validateRequest();
-
-    if(!loggedInUser) {
-        return <p className="text-destructive">
-            You$apos;re not authorized to view thiss page.
-        </p>
+    if (!loggedInUser) {
+        return <p className="text-destructive">You're not authorized to view this page.</p>;
     }
 
     const user = await getUser(username, loggedInUser.id);
@@ -59,74 +57,72 @@ export default async function Page({params: { username }}: PageProps) {
     return (
         <main className="flex w-full min-w-0 gap-5">
             <div className="w-full min-w-0 space-y-5">
-                <UserProfile user={user} loggedInUserId={loggedInUser.id}/>
+                {/* UserProfile is used here as part of the Page */}
+                <UserProfile user={user} loggedInUserId={loggedInUser.id} />
                 <div className="rounded-2xl bg-card p-5 shadow-sm">
                     <h2 className="text-center text-2xl font-bold">
                         {user.displayName}&apos;s posts
                     </h2>
                 </div>
-                <UserPost userId={user.id}/>
+                <UserPost userId={user.id} />
             </div>
-            <TrendsSidebar/>
+            <TrendsSidebar />
         </main>
-    )
+    );
 }
 
 interface UserProfileProps {
     user: UserData;
-    loggedInUserId: string
+    loggedInUserId: string;
 }
 
-export function UserProfile({user, loggedInUserId} : UserProfileProps) {
+// Sub-component: Not exported as a Page
+export function UserProfile({ user, loggedInUserId }: UserProfileProps) {
     const followerInfo: FollowerrInfo = {
         followers: user._count.followers,
-        isFollowedByUser: user.followers.some(
-            ({followerId}) => followerId === loggedInUserId
-        )
-    }
+        isFollowedByUser: user.followers.some(({ followerId }) => followerId === loggedInUserId),
+    };
 
-    return <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
-        <UserAvatar 
-        avatarUrl={user.avatarUrl}
-        size={250}
-        className="mx-auto size-full max-h-60 max-w-60 rounded-full"
-        />
-        <div className="flex flex-wrap gap-3 sm:flex-nowrap">
-            <div className="me-auto space-y-3">
-                <div>
-                    <h1 className="text-3xl font-bold">{user.displayName}</h1>
-                    <div className="text-muted-foreground">@{user.username}</div>
-                </div>
+    return (
+        <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
+            <UserAvatar
+                avatarUrl={user.avatarUrl}
+                size={250}
+                className="mx-auto size-full max-h-60 max-w-60 rounded-full"
+            />
+            <div className="flex flex-wrap gap-3 sm:flex-nowrap">
+                <div className="me-auto space-y-3">
+                    <div>
+                        <h1 className="text-3xl font-bold">{user.displayName}</h1>
+                        <div className="text-muted-foreground">@{user.username}</div>
+                    </div>
 
-                <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
-                <div className="flex items-center gap-3">
-                    <span>
-                        Posts: {" "}
-                        <span className="font-semibold">
-                            {formatNumber(user._count.posts)}
+                    <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
+                    <div className="flex items-center gap-3">
+                        <span>
+                            Posts: {" "}
+                            <span className="font-semibold">
+                                {formatNumber(user._count.posts)}
+                            </span>
                         </span>
-                    </span>
-                    <FolllowerCount userId={user.id} initialState={followerInfo}/>
+                        <FollowerCount userId={user.id} initialState={followerInfo} />
+                    </div>
                 </div>
-            </div>
-            {
-                user.id === loggedInUserId ? (
+                {user.id === loggedInUserId ? (
                     <Button>Edit profile</Button>
                 ) : (
                     <FollowButton userId={user.id} initialState={followerInfo} />
-                )
-            }
-        </div>
+                )}
+            </div>
 
-        {
-            user.bio && (
+            {user.bio && (
                 <>
                     <hr />
                     <div className="overflow-hidden whitespace-pre-line break-words">
                         {user.bio}
                     </div>
                 </>
-            )
-        }
-    </div>
+            )}
+        </div>
+    );
 }
